@@ -1509,7 +1509,7 @@ tb_bool_t vm86_instruction_compile(vm86_instruction_ref_t instruction, tb_char_t
             if (p == e)
             {
                 // init instruction
-                instruction->r0         = r0;
+                instruction->r0         = (tb_uint8_t)r0;
                 instruction->v0.u32     = v0;
                 instruction->done       = vm86_instruction_find(name, g_xxx_$r0_add_v0$, tb_arrayn(g_xxx_$r0_add_v0$));
             }
@@ -1517,8 +1517,8 @@ tb_bool_t vm86_instruction_compile(vm86_instruction_ref_t instruction, tb_char_t
             else if (vm86_parser_get_register(&p, e, &r1))
             {
                 // init instruction
-                instruction->r0         = r0;
-                instruction->r1         = r1;
+                instruction->r0         = (tb_uint8_t)r0;
+                instruction->r1         = (tb_uint8_t)r1;
                 instruction->v0.u32     = v0;
                 instruction->done       = vm86_instruction_find(name, g_xxx_$r0_add_v0$_r1, tb_arrayn(g_xxx_$r0_add_v0$_r1));
             }
@@ -1529,7 +1529,7 @@ tb_bool_t vm86_instruction_compile(vm86_instruction_ref_t instruction, tb_char_t
                 if (!vm86_parser_get_value(&p, e, &v1, proc_locals, proc_labels, data)) break;
 
                 // init instruction
-                instruction->r0         = r0;
+                instruction->r0         = (tb_uint8_t)r0;
                 instruction->v0.u32     = v0;
                 instruction->v1.u32     = v1;
                 instruction->done       = vm86_instruction_find(name, g_xxx_$r0_add_v0$_v1, tb_arrayn(g_xxx_$r0_add_v0$_v1));
@@ -1545,7 +1545,7 @@ tb_bool_t vm86_instruction_compile(vm86_instruction_ref_t instruction, tb_char_t
             if (p == e)
             {
                 // init instruction
-                instruction->r0     = r0;
+                instruction->r0     = (tb_uint8_t)r0;
                 instruction->done   = vm86_instruction_find(name, g_xxx_r0, tb_arrayn(g_xxx_r0));
             }
             // xxx r0, r1, ...?
@@ -1558,17 +1558,17 @@ tb_bool_t vm86_instruction_compile(vm86_instruction_ref_t instruction, tb_char_t
                 if (p == e)
                 {
                     // init instruction
-                    instruction->r0         = r0;
-                    instruction->r1         = r1;
+                    instruction->r0         = (tb_uint8_t)r0;
+                    instruction->r1         = (tb_uint8_t)r1;
                     instruction->done       = vm86_instruction_find(name, g_xxx_r0_r1, tb_arrayn(g_xxx_r0_r1));
                 }
                 // xxx r0, r1, r2?
                 else if (vm86_parser_get_register(&p, e, &r2))
                 {
                     // init instruction
-                    instruction->r0         = r0;
-                    instruction->r1         = r1;
-                    instruction->r2         = r2;
+                    instruction->r0         = (tb_uint8_t)r0;
+                    instruction->r1         = (tb_uint8_t)r1;
+                    instruction->r2         = (tb_uint8_t)r2;
                     instruction->done       = vm86_instruction_find(name, g_xxx_r0_r1_r2, tb_arrayn(g_xxx_r0_r1_r2));
                 }
                 else break;
@@ -1602,9 +1602,9 @@ tb_bool_t vm86_instruction_compile(vm86_instruction_ref_t instruction, tb_char_t
                     if (!vm86_parser_get_value(&p, e, &v0, proc_locals, proc_labels, data)) break;
 
                     // init instruction
-                    instruction->r0         = r0;
-                    instruction->r1         = r1;
-                    instruction->r2         = r2;
+                    instruction->r0         = (tb_uint8_t)r0;
+                    instruction->r1         = (tb_uint8_t)r1;
+                    instruction->r2         = (tb_uint8_t)r2;
                     instruction->op         = op;
                     instruction->v0.u32     = v0;
                     instruction->done       = vm86_instruction_find(name, g_xxx_r0_$r1_add_r2_op_v0$, tb_arrayn(g_xxx_r0_$r1_add_r2_op_v0$));
@@ -1616,8 +1616,8 @@ tb_bool_t vm86_instruction_compile(vm86_instruction_ref_t instruction, tb_char_t
                     if (!vm86_parser_get_value(&p, e, &v0, proc_locals, proc_labels, data)) break;
 
                     // init instruction
-                    instruction->r0         = r0;
-                    instruction->r1         = r1;
+                    instruction->r0         = (tb_uint8_t)r0;
+                    instruction->r1         = (tb_uint8_t)r1;
                     instruction->v0.u32     = v0;
                     instruction->done       = vm86_instruction_find(name, g_xxx_r0_$r1_add_v0$, tb_arrayn(g_xxx_r0_$r1_add_v0$));
                 }
@@ -1633,7 +1633,7 @@ tb_bool_t vm86_instruction_compile(vm86_instruction_ref_t instruction, tb_char_t
                 if (!vm86_parser_get_offset_value(&p, e, &v0, proc_labels, data)) break;
 
                 // init instruction
-                instruction->r0         = r0;
+                instruction->r0         = (tb_uint8_t)r0;
                 instruction->v0.u32     = v0;
                 instruction->done       = vm86_instruction_find(name, g_xxx_r0_v0, tb_arrayn(g_xxx_r0_v0));
             }
@@ -1641,7 +1641,7 @@ tb_bool_t vm86_instruction_compile(vm86_instruction_ref_t instruction, tb_char_t
             else if (vm86_parser_get_number_value(&p, e, &v0))
             {
                 // init instruction
-                instruction->r0         = r0;
+                instruction->r0         = (tb_uint8_t)r0;
                 instruction->v0.u32     = v0;
                 instruction->done       = vm86_instruction_find(name, g_xxx_r0_v0, tb_arrayn(g_xxx_r0_v0));
             }
@@ -1668,7 +1668,7 @@ tb_bool_t vm86_instruction_compile(vm86_instruction_ref_t instruction, tb_char_t
                 if (!vm86_parser_get_value(&p, e, &v1, proc_locals, proc_labels, data)) break;
 
                 // init instruction
-                instruction->r0         = r0;
+                instruction->r0         = (tb_uint8_t)r0;
                 instruction->v0.u32     = v0;
                 instruction->v1.u32     = v1;
                 instruction->done       = vm86_instruction_find(name, g_xxx_v0$r0_mul_v1$, tb_arrayn(g_xxx_v0$r0_mul_v1$));

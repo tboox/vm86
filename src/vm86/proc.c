@@ -228,7 +228,7 @@ static tb_char_t const* vm86_proc_compiler_read_data(vm86_proc_t* proc, tb_char_
                         // get value
                         tb_uint32_t value = 0;
                         if (!vm86_parser_get_number_value(&p, e, &value)) break;
-                        tb_assert(value >= TB_MINU8 && value <= TB_MAXU8);
+                        tb_assert(value <= TB_MAXU8);
 
                         // append data
                         *qb++ = (tb_byte_t)value;
@@ -290,7 +290,7 @@ static tb_char_t const* vm86_proc_compiler_read_data(vm86_proc_t* proc, tb_char_
                     // get value
                     tb_uint32_t value = 0;
                     if (!vm86_parser_get_number_value(&p, e, &value)) break;
-                    tb_assert(value >= TB_MINU32 && value <= TB_MAXU32);
+                    tb_assert(value <= TB_MAXU32);
 
                     // append data
                     tb_bits_set_u32_ne(qb, value);
