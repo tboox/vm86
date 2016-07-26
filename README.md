@@ -235,6 +235,14 @@ $ xmake r demo
 The script files: `export_function.idc` and `export_data.idc` in the project directory (idc) 
 can help us to export the given assembly function and data from the ida pro.
 
+#### Contacts
+
+- Email:        
+    - waruqi@gmail.com
+- Website: 	    
+	- [tboox.org](http://www.tboox.org)
+	- [tboox.net](http://www.tboox.net)
+
 
 # x86汇编指令脚本虚拟机
 
@@ -506,3 +514,13 @@ $ xmake r demo
 
 最后，在项目的idc目录下，有两个脚本工具：`export_function.idc` 和 `export_data.idc` 可以用来辅助我们从ida中导出指定的汇编函数和数据
 
+## 联系方式
+
+- Email:        
+    - waruqi@gmail.com
+    - waruqi@126.com
+- Website: 	    
+	- [tboox.org](http://www.tboox.org/cn)
+	- [tboox.net](http://www.tboox.net/cn)
+- QQ(group):    
+    - 343118190
