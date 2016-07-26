@@ -27,7 +27,7 @@ static tb_void_t vm86_demo_proc_func_printf(vm86_machine_ref_t machine)
     // done it
     tb_printf((tb_char_t const*)format, value);
 }
-static tb_void_t vm86_demo_proc_done_hello(tb_uint32_t value)
+static tb_void_t vm86_demo_proc_exec_hello(tb_uint32_t value)
 {
     // the code
     static tb_char_t const s_code_sub_hello[] = 
@@ -113,7 +113,7 @@ sub_hello    endp \n\
         tb_spinlock_leave(lock);
     } 
 }
-static tb_void_t vm86_demo_proc_done_sub_6B2B40(tb_uint64_t a1, tb_uint8_t a2)
+static tb_void_t vm86_demo_proc_exec_sub_6B2B40(tb_uint64_t a1, tb_uint8_t a2)
 {
     // the code
     static tb_char_t const s_code_sub_6B2B40[] = 
@@ -193,10 +193,10 @@ tb_int_t main(tb_int_t argc, tb_char_t** argv)
     if (!tb_init(tb_null, tb_null)) return 0;
 
     // done
-    vm86_demo_proc_done_hello(0x31415926);
-    vm86_demo_proc_done_sub_6B2B40((0x123ULL << 32) | 0x321, 8);
-    vm86_demo_proc_done_sub_6B2B40((0x123ULL << 32) | 0x321, 16);
-    vm86_demo_proc_done_sub_6B2B40((0x123ULL << 32) | 0x321, 32);
+    vm86_demo_proc_exec_hello(0x31415926);
+    vm86_demo_proc_exec_sub_6B2B40((0x123ULL << 32) | 0x321, 8);
+    vm86_demo_proc_exec_sub_6B2B40((0x123ULL << 32) | 0x321, 16);
+    vm86_demo_proc_exec_sub_6B2B40((0x123ULL << 32) | 0x321, 32);
 
     // exit tbox
     tb_exit();
