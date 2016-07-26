@@ -29,8 +29,8 @@
  * types
  */
 
-// the machine text impl type
-typedef struct __vm86_text_impl_t
+// the machine text text type
+typedef struct __vm86_text_t
 {
     // the machine
     vm86_machine_ref_t      machine;
@@ -38,12 +38,12 @@ typedef struct __vm86_text_impl_t
     // the procs
     tb_hash_map_ref_t       procs;
 
-}vm86_text_impl_t;
+}vm86_text_t;
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * private implementation
  */
-static tb_void_t vm86_text_proc_exit(tb_element_t* func, tb_pointer_t buff)
+static tb_void_t vm86_text_proc_exit(tb_element_ref_t func, tb_pointer_t buff)
 {
     // check
     tb_assert_and_check_return(buff);
@@ -65,20 +65,20 @@ vm86_text_ref_t vm86_text_init(vm86_machine_ref_t machine)
     tb_assert_and_check_return_val(machine, tb_null);
 
     // done
-    tb_bool_t                   ok = tb_false;
-    vm86_text_impl_t*    impl = tb_null;
+    tb_bool_t       ok = tb_false;
+    vm86_text_t*    text = tb_null;
     do
     {
         // make text
-        impl = tb_malloc0_type(vm86_text_impl_t);
-        tb_assert_and_check_break(impl);
+        text = tb_malloc0_type(vm86_text_t);
+        tb_assert_and_check_break(text);
 
         // save machine
-        impl->machine = machine;
+        text->machine = machine;
 
         // init procs
-        impl->procs = tb_hash_map_init(8, tb_element_str(tb_true), tb_element_ptr(vm86_text_proc_exit, tb_null));
-        tb_assert_and_check_break(impl->procs);
+        text->procs = tb_hash_map_init(8, tb_element_str(tb_true), tb_element_ptr(vm86_text_proc_exit, tb_null));
+        tb_assert_and_check_break(text->procs);
 
         // ok
         ok = tb_true;
@@ -89,39 +89,39 @@ vm86_text_ref_t vm86_text_init(vm86_machine_ref_t machine)
     if (!ok)
     {
         // exit it
-        if (impl) vm86_text_exit((vm86_text_ref_t)impl);
-        impl = tb_null;
+        if (text) vm86_text_exit((vm86_text_ref_t)text);
+        text = tb_null;
     }
 
     // ok?
-    return (vm86_text_ref_t)impl;
+    return (vm86_text_ref_t)text;
 }
-tb_void_t vm86_text_exit(vm86_text_ref_t text)
+tb_void_t vm86_text_exit(vm86_text_ref_t self)
 {
     // check
-    vm86_text_impl_t* impl = (vm86_text_impl_t*)text;
-    tb_assert_and_check_return(impl);
+    vm86_text_t* text = (vm86_text_t*)self;
+    tb_assert_and_check_return(text);
 
     // exit procs
-    if (impl->procs) tb_hash_map_exit(impl->procs);
-    impl->procs = tb_null;
+    if (text->procs) tb_hash_map_exit(text->procs);
+    text->procs = tb_null;
 
     // exit it
-    tb_free(impl);
+    tb_free(text);
 }
-vm86_proc_ref_t vm86_text_compile(vm86_text_ref_t text, tb_char_t const* code, tb_size_t size)
+vm86_proc_ref_t vm86_text_compile(vm86_text_ref_t self, tb_char_t const* code, tb_size_t size)
 {
     // check
-    vm86_text_impl_t* impl = (vm86_text_impl_t*)text;
-    tb_assert_and_check_return_val(impl && impl->machine && impl->procs && code && size, tb_null);
+    vm86_text_t* text = (vm86_text_t*)self;
+    tb_assert_and_check_return_val(text && text->machine && text->procs && code && size, tb_null);
 
     // done
-    tb_bool_t                   ok = tb_false;
-    vm86_proc_ref_t      proc = tb_null;
+    tb_bool_t       ok = tb_false;
+    vm86_proc_ref_t proc = tb_null;
     do
     {
         // make proc
-        proc = vm86_proc_init(impl->machine, code, size);
+        proc = vm86_proc_init(text->machine, code, size);
         tb_assert_and_check_break(proc);
 
         // the proc name
@@ -129,7 +129,7 @@ vm86_proc_ref_t vm86_text_compile(vm86_text_ref_t text, tb_char_t const* code, t
         tb_assert_and_check_break(name);
 
         // save proc
-        tb_hash_map_insert(impl->procs, name, proc);
+        tb_hash_map_insert(text->procs, name, proc);
 
         // ok
         ok = tb_true;
@@ -147,13 +147,13 @@ vm86_proc_ref_t vm86_text_compile(vm86_text_ref_t text, tb_char_t const* code, t
     // ok?
     return proc;
 }
-vm86_proc_ref_t vm86_text_proc(vm86_text_ref_t text, tb_char_t const* name)
+vm86_proc_ref_t vm86_text_proc(vm86_text_ref_t self, tb_char_t const* name)
 {
     // check
-    vm86_text_impl_t* impl = (vm86_text_impl_t*)text;
-    tb_assert_and_check_return_val(impl && name, tb_null);
+    vm86_text_t* text = (vm86_text_t*)self;
+    tb_assert_and_check_return_val(text && name, tb_null);
 
     // find proc
-    return (vm86_proc_ref_t)tb_hash_map_get(impl->procs, name);
+    return (vm86_proc_ref_t)tb_hash_map_get(text->procs, name);
 }
 

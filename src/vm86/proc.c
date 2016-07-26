@@ -37,8 +37,8 @@
  * types
  */
 
-// the machine proc impl type
-typedef struct __vm86_proc_impl_t
+// the machine proc proc type
+typedef struct __vm86_proc_t
 {
     // the name
     tb_char_t*                  name;
@@ -61,12 +61,12 @@ typedef struct __vm86_proc_impl_t
     // the last data name
     tb_char_t                   last_data_name[8192];
 
-}vm86_proc_impl_t;
+}vm86_proc_t;
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * compiler implementation
  */
-static tb_char_t const* vm86_proc_compiler_find_name(vm86_proc_impl_t* impl, tb_char_t const* p, tb_char_t const* e)
+static tb_char_t const* vm86_proc_compiler_find_name(vm86_proc_t* proc, tb_char_t const* p, tb_char_t const* e)
 {
     // save the start position
     tb_char_t const* b = p;
@@ -77,7 +77,7 @@ static tb_char_t const* vm86_proc_compiler_find_name(vm86_proc_impl_t* impl, tb_
         if (p)
         {
             // save the proc position
-            tb_char_t const* proc = p;
+            tb_char_t const* pos = p;
 
             // find the near
             p += 4;
@@ -85,7 +85,7 @@ static tb_char_t const* vm86_proc_compiler_find_name(vm86_proc_impl_t* impl, tb_
             if (p)
             {
                 // seek the name last
-                tb_char_t const* t = proc - 1;
+                tb_char_t const* t = pos - 1;
                 while (t >= b && tb_isspace(*t)) t--;
                 if (t < b) 
                 {
@@ -102,10 +102,10 @@ static tb_char_t const* vm86_proc_compiler_find_name(vm86_proc_impl_t* impl, tb_
                 else h++;
 
                 // save name
-                impl->name = tb_strndup(h, t - h);
+                proc->name = tb_strndup(h, t - h);
                 
                 // trace
-                tb_trace_d("proc: %s", impl->name);
+                tb_trace_d("proc: %s", proc->name);
 
                 // ok
                 p += 4;
@@ -173,10 +173,10 @@ static tb_char_t const* vm86_proc_compiler_read_line(tb_char_t const* p, tb_char
     // ok?
     return p;
 }
-static tb_char_t const* vm86_proc_compiler_read_data(vm86_proc_impl_t* impl, tb_char_t const* p, tb_char_t const* e, tb_byte_t* data, tb_size_t* size)
+static tb_char_t const* vm86_proc_compiler_read_data(vm86_proc_t* proc, tb_char_t const* p, tb_char_t const* e, tb_byte_t* data, tb_size_t* size)
 {
     // check
-    tb_assert_and_check_return_val(impl && impl->labels, tb_null);
+    tb_assert_and_check_return_val(proc && proc->labels, tb_null);
 
     // done
     tb_bool_t   ok = tb_false;
@@ -278,7 +278,7 @@ static tb_char_t const* vm86_proc_compiler_read_data(vm86_proc_impl_t* impl, tb_
 
                     // get the offset value
                     tb_uint32_t value = 0;
-                    if (!vm86_parser_get_offset_value(&p, e, &value, impl->labels, vm86_machine_data(impl->machine))) break;
+                    if (!vm86_parser_get_offset_value(&p, e, &value, proc->labels, vm86_machine_data(proc->machine))) break;
 
                     // append data
                     tb_bits_set_u32_ne(qb, value);
@@ -335,10 +335,10 @@ static tb_char_t const* vm86_proc_compiler_read_data(vm86_proc_impl_t* impl, tb_
     // ok?
     return p;
 }
-static tb_bool_t vm86_proc_compiler_prepare_locals(vm86_proc_impl_t* impl, tb_char_t const* p, tb_char_t const* e)
+static tb_bool_t vm86_proc_compiler_prepare_locals(vm86_proc_t* proc, tb_char_t const* p, tb_char_t const* e)
 {
     // check
-    tb_assert_and_check_return_val(impl && impl->locals, tb_false);
+    tb_assert_and_check_return_val(proc && proc->locals, tb_false);
 
     // done
     tb_bool_t ok = tb_false;
@@ -382,7 +382,7 @@ static tb_bool_t vm86_proc_compiler_prepare_locals(vm86_proc_impl_t* impl, tb_ch
         if (!vm86_parser_get_number_value(&p, e, &value)) break;
 
         // save local
-        tb_hash_map_insert(impl->locals, name, (tb_pointer_t)value);
+        tb_hash_map_insert(proc->locals, name, (tb_pointer_t)value);
 
         // trace
         tb_trace_d("local: %s, type: %s, value: %d", name, type, value);
@@ -395,10 +395,10 @@ static tb_bool_t vm86_proc_compiler_prepare_locals(vm86_proc_impl_t* impl, tb_ch
     // ok?
     return ok;
 }
-static tb_bool_t vm86_proc_compiler_prepare_label(vm86_proc_impl_t* impl, tb_char_t const* p, tb_char_t const* e, tb_size_t offset)
+static tb_bool_t vm86_proc_compiler_prepare_label(vm86_proc_t* proc, tb_char_t const* p, tb_char_t const* e, tb_size_t offset)
 {
     // check
-    tb_assert_and_check_return_val(impl && impl->labels, tb_false);
+    tb_assert_and_check_return_val(proc && proc->labels, tb_false);
 
     // done
     tb_bool_t ok = tb_false;
@@ -414,7 +414,7 @@ static tb_bool_t vm86_proc_compiler_prepare_label(vm86_proc_impl_t* impl, tb_cha
         tb_memcpy(name, b, p - b);
 
         // save offset
-        tb_hash_map_insert(impl->labels, name, (tb_cpointer_t)offset);
+        tb_hash_map_insert(proc->labels, name, (tb_cpointer_t)offset);
 
         // trace
         tb_trace_d("label: %s => %lu", name, offset);
@@ -427,7 +427,7 @@ static tb_bool_t vm86_proc_compiler_prepare_label(vm86_proc_impl_t* impl, tb_cha
     // ok?
     return ok;
 }
-static tb_char_t const* vm86_proc_compiler_prepare(vm86_proc_impl_t* impl, tb_char_t const* p, tb_char_t const* e, tb_size_t* instructions_count)
+static tb_char_t const* vm86_proc_compiler_prepare(vm86_proc_t* proc, tb_char_t const* p, tb_char_t const* e, tb_size_t* instructions_count)
 {
     // trace
     tb_trace_d("");
@@ -452,7 +452,7 @@ static tb_char_t const* vm86_proc_compiler_prepare(vm86_proc_impl_t* impl, tb_ch
         tb_assert(size < sizeof(line));
 
         // attempt to prepare locals
-        if (vm86_proc_compiler_prepare_locals(impl, line, line + size)) continue ;
+        if (vm86_proc_compiler_prepare_locals(proc, line, line + size)) continue ;
 
         // save the start position
         if (!start) start = b;
@@ -473,7 +473,7 @@ static tb_char_t const* vm86_proc_compiler_prepare(vm86_proc_impl_t* impl, tb_ch
         tb_check_continue(!is_data);
 
         // attempt to prepare label
-        if (vm86_proc_compiler_prepare_label(impl, line, line + size, count)) continue ;
+        if (vm86_proc_compiler_prepare_label(proc, line, line + size, count)) continue ;
 
         // is end?
         if (tb_strnistr(line, size, "endp")) break;
@@ -494,10 +494,10 @@ static tb_char_t const* vm86_proc_compiler_prepare(vm86_proc_impl_t* impl, tb_ch
     // ok?
     return start;
 }
-static tb_bool_t vm86_proc_compiler_compile_skip_label(vm86_proc_impl_t* impl, tb_char_t const* p, tb_char_t const* e)
+static tb_bool_t vm86_proc_compiler_compile_skip_label(vm86_proc_t* proc, tb_char_t const* p, tb_char_t const* e)
 {
     // check
-    tb_assert_and_check_return_val(impl && impl->labels, tb_false);
+    tb_assert_and_check_return_val(proc && proc->labels, tb_false);
 
     // done
     tb_bool_t ok = tb_false;
@@ -515,13 +515,13 @@ static tb_bool_t vm86_proc_compiler_compile_skip_label(vm86_proc_impl_t* impl, t
     // ok?
     return ok;
 }
-static tb_bool_t vm86_proc_compiler_compile_data(vm86_proc_impl_t* impl, tb_char_t const* p, tb_char_t const* e)
+static tb_bool_t vm86_proc_compiler_compile_data(vm86_proc_t* proc, tb_char_t const* p, tb_char_t const* e)
 {
     // check
-    tb_assert_and_check_return_val(impl && impl->machine, tb_false);
+    tb_assert_and_check_return_val(proc && proc->machine, tb_false);
 
     // the data
-    vm86_data_ref_t data = vm86_machine_data(impl->machine);
+    vm86_data_ref_t data = vm86_machine_data(proc->machine);
     tb_assert_and_check_return_val(data, tb_false);
 
     // done
@@ -553,7 +553,7 @@ static tb_bool_t vm86_proc_compiler_compile_data(vm86_proc_impl_t* impl, tb_char
         {
             // read data
             tb_size_t read = maxn;
-            p = vm86_proc_compiler_read_data(impl, p, e, base, &read);
+            p = vm86_proc_compiler_read_data(proc, p, e, base, &read);
             tb_assert(p && read);
 
             // update the buffer
@@ -568,7 +568,7 @@ static tb_bool_t vm86_proc_compiler_compile_data(vm86_proc_impl_t* impl, tb_char
         if (only_data)
         {
             // add data
-            vm86_data_add(data, impl->last_data_name, buff, base - buff);
+            vm86_data_add(data, proc->last_data_name, buff, base - buff);
         }
         // exists name? add new data
         else 
@@ -577,7 +577,7 @@ static tb_bool_t vm86_proc_compiler_compile_data(vm86_proc_impl_t* impl, tb_char
             vm86_data_add(data, name, buff, base - buff);
 
             // save the last data name
-            tb_strlcpy(impl->last_data_name, name, sizeof(impl->last_data_name));
+            tb_strlcpy(proc->last_data_name, name, sizeof(proc->last_data_name));
         }
 
         // ok
@@ -588,18 +588,18 @@ static tb_bool_t vm86_proc_compiler_compile_data(vm86_proc_impl_t* impl, tb_char
     // ok?
     return ok;
 }
-static tb_bool_t vm86_proc_compiler_compile_code(vm86_proc_impl_t* impl, tb_char_t const* p, tb_char_t const* e, vm86_instruction_ref_t instruction)
+static tb_bool_t vm86_proc_compiler_compile_code(vm86_proc_t* proc, tb_char_t const* p, tb_char_t const* e, vm86_instruction_ref_t instruction)
 {
     // check
-    tb_assert_and_check_return_val(impl, tb_false);
+    tb_assert_and_check_return_val(proc, tb_false);
 
     // compile this instruction
-    return vm86_instruction_compile(instruction, p, e - p, impl->machine, impl->labels, impl->locals);
+    return vm86_instruction_compile(instruction, p, e - p, proc->machine, proc->labels, proc->locals);
 }
-static tb_size_t vm86_proc_compiler_compile_done(vm86_proc_impl_t* impl, tb_char_t const* p, tb_char_t const* e)
+static tb_size_t vm86_proc_compiler_compile_done(vm86_proc_t* proc, tb_char_t const* p, tb_char_t const* e)
 {
     // check
-    tb_assert_and_check_return_val(impl, 0);
+    tb_assert_and_check_return_val(proc, 0);
 
     // trace
     tb_trace_d("");
@@ -630,7 +630,7 @@ static tb_size_t vm86_proc_compiler_compile_done(vm86_proc_impl_t* impl, tb_char
         {
             // dump data
 #ifdef __vm_debug__
-            if (is_data) vm86_data_dump(vm86_machine_data(impl->machine));
+            if (is_data) vm86_data_dump(vm86_machine_data(proc->machine));
 #endif
 
             // switch to the code segment
@@ -642,13 +642,13 @@ static tb_size_t vm86_proc_compiler_compile_done(vm86_proc_impl_t* impl, tb_char
         if (is_data)
         {
             // compile data
-            if (!vm86_proc_compiler_compile_data(impl, line, line + size)) break ;
+            if (!vm86_proc_compiler_compile_data(proc, line, line + size)) break ;
         }
         // is code?
         else
         {
             // skip the label
-            if (vm86_proc_compiler_compile_skip_label(impl, line, line + size)) continue ;
+            if (vm86_proc_compiler_compile_skip_label(proc, line, line + size)) continue ;
 
             // is end?
             if (tb_strnistr(line, size, "endp")) break;
@@ -658,7 +658,7 @@ static tb_size_t vm86_proc_compiler_compile_done(vm86_proc_impl_t* impl, tb_char
             tb_trace_d("line: %s", line);
 
             // compile code
-            if (!vm86_proc_compiler_compile_code(impl, line, line + size, &impl->instructions[count])) break ;
+            if (!vm86_proc_compiler_compile_code(proc, line, line + size, &proc->instructions[count])) break ;
 
             // update the instructions count
             count++;
@@ -671,7 +671,7 @@ static tb_size_t vm86_proc_compiler_compile_done(vm86_proc_impl_t* impl, tb_char
     // ok?
     return count;
 }
-static tb_bool_t vm86_proc_compile(vm86_proc_impl_t* impl, tb_char_t const* code, tb_size_t size)
+static tb_bool_t vm86_proc_compile(vm86_proc_t* proc, tb_char_t const* code, tb_size_t size)
 {
     // trace
     tb_trace_d("=====================================================================");
@@ -683,33 +683,33 @@ static tb_bool_t vm86_proc_compile(vm86_proc_impl_t* impl, tb_char_t const* code
     do
     {
         // find the proc name
-        p = vm86_proc_compiler_find_name(impl, p, e);
-        tb_assert_and_check_break(p && impl->name);
+        p = vm86_proc_compiler_find_name(proc, p, e);
+        tb_assert_and_check_break(p && proc->name);
 
         // prepare some data and labels first before compiling code
-        p = vm86_proc_compiler_prepare(impl, p, e, &impl->instructions_count);
-        tb_assert_and_check_break(p < e && p && impl->instructions_count);
+        p = vm86_proc_compiler_prepare(proc, p, e, &proc->instructions_count);
+        tb_assert_and_check_break(p < e && p && proc->instructions_count);
 
         // make instructions
-        impl->instructions = tb_nalloc0_type(impl->instructions_count, vm86_instruction_t);
-        tb_assert_and_check_break(impl->instructions);
+        proc->instructions = tb_nalloc0_type(proc->instructions_count, vm86_instruction_t);
+        tb_assert_and_check_break(proc->instructions);
 
         // convert the labels offset to the instructions address
-        tb_for_all_if (tb_hash_map_item_t*, item, impl->labels, item)
+        tb_for_all_if (tb_hash_map_item_t*, item, proc->labels, item)
         {
             // check
-            tb_assert((tb_uint32_t)item->data < impl->instructions_count);
+            tb_assert((tb_uint32_t)item->data < proc->instructions_count);
 
             // the offset
-            tb_uint32_t offset = (tb_uint32_t)(impl->instructions + (tb_uint32_t)item->data);
+            tb_uint32_t offset = (tb_uint32_t)(proc->instructions + (tb_uint32_t)item->data);
 
             // update the offset
-            tb_iterator_copy(impl->labels, item_itor, (tb_pointer_t)offset);
+            tb_iterator_copy(proc->labels, item_itor, (tb_pointer_t)offset);
         }
 
         // compile it
-        tb_size_t count = vm86_proc_compiler_compile_done(impl, p, e);
-        tb_assert_and_check_break(count == impl->instructions_count);
+        tb_size_t count = vm86_proc_compiler_compile_done(proc, p, e);
+        tb_assert_and_check_break(count == proc->instructions_count);
 
         // ok
         ok = tb_true;
@@ -729,27 +729,27 @@ vm86_proc_ref_t vm86_proc_init(vm86_machine_ref_t machine, tb_char_t const* code
     tb_assert_and_check_return_val(machine && code && size, tb_null);
 
     // done
-    tb_bool_t                   ok = tb_false;
-    vm86_proc_impl_t*    impl = tb_null;
+    tb_bool_t       ok = tb_false;
+    vm86_proc_t*    proc = tb_null;
     do
     {
         // make proc
-        impl = tb_malloc0_type(vm86_proc_impl_t);
-        tb_assert_and_check_break(impl);
+        proc = tb_malloc0_type(vm86_proc_t);
+        tb_assert_and_check_break(proc);
 
         // save machine
-        impl->machine = machine;
+        proc->machine = machine;
 
         // init labels
-        impl->labels = tb_hash_map_init(8, tb_element_str(tb_true), tb_element_uint32());
-        tb_assert_and_check_break(impl->labels);
+        proc->labels = tb_hash_map_init(8, tb_element_str(tb_true), tb_element_uint32());
+        tb_assert_and_check_break(proc->labels);
 
         // init locals
-        impl->locals = tb_hash_map_init(8, tb_element_str(tb_true), tb_element_uint32());
-        tb_assert_and_check_break(impl->locals);
+        proc->locals = tb_hash_map_init(8, tb_element_str(tb_true), tb_element_uint32());
+        tb_assert_and_check_break(proc->locals);
 
         // compile code
-        ok = vm86_proc_compile(impl, code, size);
+        ok = vm86_proc_compile(proc, code, size);
 
     } while (0);
 
@@ -757,37 +757,37 @@ vm86_proc_ref_t vm86_proc_init(vm86_machine_ref_t machine, tb_char_t const* code
     if (!ok)
     {
         // exit it
-        if (impl) vm86_proc_exit((vm86_proc_ref_t)impl);
-        impl = tb_null;
+        if (proc) vm86_proc_exit((vm86_proc_ref_t)proc);
+        proc = tb_null;
     }
 
     // ok?
-    return (vm86_proc_ref_t)impl;
+    return (vm86_proc_ref_t)proc;
 }
-tb_void_t vm86_proc_exit(vm86_proc_ref_t proc)
+tb_void_t vm86_proc_exit(vm86_proc_ref_t self)
 {
     // check
-    vm86_proc_impl_t* impl = (vm86_proc_impl_t*)proc;
-    tb_assert_and_check_return(impl);
+    vm86_proc_t* proc = (vm86_proc_t*)self;
+    tb_assert_and_check_return(proc);
 
     // exit name
-    if (impl->name) tb_free(impl->name);
-    impl->name = tb_null;
+    if (proc->name) tb_free(proc->name);
+    proc->name = tb_null;
 
     // exit labels
-    if (impl->labels) tb_hash_map_exit(impl->labels);
-    impl->labels = tb_null;
+    if (proc->labels) tb_hash_map_exit(proc->labels);
+    proc->labels = tb_null;
 
     // exit locals
-    if (impl->locals) tb_hash_map_exit(impl->locals);
-    impl->locals = tb_null;
+    if (proc->locals) tb_hash_map_exit(proc->locals);
+    proc->locals = tb_null;
 
     // exit instructions
-    if (impl->instructions) 
+    if (proc->instructions) 
     {
         // exit cstring
-        vm86_instruction_ref_t p = impl->instructions;
-        vm86_instruction_ref_t e = impl->instructions + impl->instructions_count;
+        vm86_instruction_ref_t p = proc->instructions;
+        vm86_instruction_ref_t e = proc->instructions + proc->instructions_count;
         while (p < e) 
         {
             // exists?
@@ -803,34 +803,34 @@ tb_void_t vm86_proc_exit(vm86_proc_ref_t proc)
         }
 
         // exit it
-        tb_free(impl->instructions);
-        impl->instructions = tb_null;
+        tb_free(proc->instructions);
+        proc->instructions = tb_null;
     }
 
     // exit it
-    tb_free(impl);
+    tb_free(proc);
 }
-tb_char_t const* vm86_proc_name(vm86_proc_ref_t proc)
+tb_char_t const* vm86_proc_name(vm86_proc_ref_t self)
 {
     // check
-    vm86_proc_impl_t* impl = (vm86_proc_impl_t*)proc;
-    tb_assert_and_check_return_val(impl, tb_null);
+    vm86_proc_t* proc = (vm86_proc_t*)self;
+    tb_assert_and_check_return_val(proc, tb_null);
 
     // the name
-    return impl->name;
+    return proc->name;
 }
-tb_void_t vm86_proc_done(vm86_proc_ref_t proc)
+tb_void_t vm86_proc_done(vm86_proc_ref_t self)
 {
     // check
-    vm86_proc_impl_t* impl = (vm86_proc_impl_t*)proc;
-    tb_assert_and_check_return(impl && impl->name);
+    vm86_proc_t* proc = (vm86_proc_t*)self;
+    tb_assert_and_check_return(proc && proc->name);
 
     // trace
     tb_trace_d("=====================================================================");
-    tb_trace_d("done: %s", impl->name);
+    tb_trace_d("done: %s", proc->name);
 
     // the machine
-    vm86_machine_ref_t machine = impl->machine;
+    vm86_machine_ref_t machine = proc->machine;
     tb_assert_and_check_return(machine);
 
     // the stack
@@ -841,8 +841,8 @@ tb_void_t vm86_proc_done(vm86_proc_ref_t proc)
     vm86_stack_push(stack, 0xbeaf);
 
     // done it
-    vm86_instruction_ref_t p = impl->instructions;
-    vm86_instruction_ref_t e = impl->instructions + impl->instructions_count;
+    vm86_instruction_ref_t p = proc->instructions;
+    vm86_instruction_ref_t e = proc->instructions + proc->instructions_count;
     while (p < e && p) 
     {
         // check
