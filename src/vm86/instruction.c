@@ -1,13 +1,35 @@
+/*!The x86 Script Instruction Virtual Machine
+ * 
+ * vm86 is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * vm86 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with vm86; 
+ * If not, see <a href="http://www.gnu.org/licenses/"> http://www.gnu.org/licenses/</a>
+ * 
+ * Copyright (C) 2014 - 2016, ruki All rights reserved.
+ *
+ * @author      ruki
+ * @file        instruction.c
+ *
+ */
 /* //////////////////////////////////////////////////////////////////////////////////////
  * trace
  */
-#define TB_TRACE_MODULE_NAME            "emulator_inst"
+#define TB_TRACE_MODULE_NAME            "machine_inst"
 #define TB_TRACE_MODULE_DEBUG           (0)
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * includes
  */
-#include "emulator.h"
+#include "machine.h"
 #include "parser.h"
 #include "instruction.h"
 
@@ -15,7 +37,7 @@
  * types
  */
 
-// the emulator instruction executor entry type
+// the machine instruction executor entry type
 typedef struct __vm86_instruction_entry_t
 {
     // the instruction name
@@ -54,13 +76,13 @@ static vm86_instruction_done_ref_t vm86_instruction_find(tb_char_t const* name, 
     // ok?
     return entry->done;
 }
-static vm86_instruction_ref_t vm86_instruction_done_retn(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_retn(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the stack
-    vm86_stack_ref_t stack = vm86_stack(emulator);
+    vm86_stack_ref_t stack = vm86_machine_stack(machine);
     tb_assert(stack);
 
     // pop the return address
@@ -76,17 +98,17 @@ static vm86_instruction_ref_t vm86_instruction_done_retn(vm86_instruction_ref_t 
     // end
     return tb_null;
 }
-static vm86_instruction_ref_t vm86_instruction_done_call(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_call(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // get the function name
     tb_char_t const* name = instruction->v0.cstr;
     tb_assert(name && instruction->is_cstr);
 
     // get the function
-    vm86_func_t func = vm86_function(emulator, name);
+    vm86_machine_func_t func = vm86_machine_function(machine, name);
 
     // trace
     tb_trace_d("call %s(%#x)", name, func);
@@ -95,22 +117,22 @@ static vm86_instruction_ref_t vm86_instruction_done_call(vm86_instruction_ref_t 
     tb_assert(func);
 
     // call the function
-    func(emulator);
+    func(machine);
 
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_push_r0(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_push_r0(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // the stack
-    vm86_stack_ref_t stack = vm86_stack(emulator);
+    vm86_stack_ref_t stack = vm86_machine_stack(machine);
     tb_assert(stack);
 
     // get r0
@@ -125,18 +147,18 @@ static vm86_instruction_ref_t vm86_instruction_done_push_r0(vm86_instruction_ref
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_push_v0(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_push_v0(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
     tb_used(registers);
 
     // the stack
-    vm86_stack_ref_t stack = vm86_stack(emulator);
+    vm86_stack_ref_t stack = vm86_machine_stack(machine);
     tb_assert(stack);
 
     // get v0
@@ -151,17 +173,17 @@ static vm86_instruction_ref_t vm86_instruction_done_push_v0(vm86_instruction_ref
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_pop_r0(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_pop_r0(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // the stack
-    vm86_stack_ref_t stack = vm86_stack(emulator);
+    vm86_stack_ref_t stack = vm86_machine_stack(machine);
     tb_assert(stack);
 
     // pop r0
@@ -177,13 +199,13 @@ static vm86_instruction_ref_t vm86_instruction_done_pop_r0(vm86_instruction_ref_
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_mov_r0_r1(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_mov_r0_r1(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r1
@@ -198,13 +220,13 @@ static vm86_instruction_ref_t vm86_instruction_done_mov_r0_r1(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_mov_r0_v0(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_mov_r0_v0(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get v0
@@ -219,13 +241,13 @@ static vm86_instruction_ref_t vm86_instruction_done_mov_r0_v0(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_mov_r0_$r1_add_v0$(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_mov_r0_$r1_add_v0$(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r1
@@ -243,13 +265,13 @@ static vm86_instruction_ref_t vm86_instruction_done_mov_r0_$r1_add_v0$(vm86_inst
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_mov_$r0_add_v0$_r1(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_mov_$r0_add_v0$_r1(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -270,13 +292,13 @@ static vm86_instruction_ref_t vm86_instruction_done_mov_$r0_add_v0$_r1(vm86_inst
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_mov_$r0_add_v0$_v1(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_mov_$r0_add_v0$_v1(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -297,13 +319,13 @@ static vm86_instruction_ref_t vm86_instruction_done_mov_$r0_add_v0$_v1(vm86_inst
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_movzx_r0_r1(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_movzx_r0_r1(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r1
@@ -318,13 +340,13 @@ static vm86_instruction_ref_t vm86_instruction_done_movzx_r0_r1(vm86_instruction
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_add_r0_r1(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_add_r0_r1(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -342,13 +364,13 @@ static vm86_instruction_ref_t vm86_instruction_done_add_r0_r1(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_add_r0_v0(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_add_r0_v0(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -366,13 +388,13 @@ static vm86_instruction_ref_t vm86_instruction_done_add_r0_v0(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_add_r0_$r1_add_v0$(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_add_r0_$r1_add_v0$(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -393,13 +415,13 @@ static vm86_instruction_ref_t vm86_instruction_done_add_r0_$r1_add_v0$(vm86_inst
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_sub_r0_r1(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_sub_r0_r1(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -417,13 +439,13 @@ static vm86_instruction_ref_t vm86_instruction_done_sub_r0_r1(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_sub_r0_v0(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_sub_r0_v0(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -441,13 +463,13 @@ static vm86_instruction_ref_t vm86_instruction_done_sub_r0_v0(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_sub_r0_$r1_add_v0$(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_sub_r0_$r1_add_v0$(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -468,13 +490,13 @@ static vm86_instruction_ref_t vm86_instruction_done_sub_r0_$r1_add_v0$(vm86_inst
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_lea_r0_$r1_add_r2_op_v0$(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_lea_r0_$r1_add_r2_op_v0$(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get op
@@ -552,17 +574,17 @@ static tb_bool_t vm86_instruction_done_jxx(tb_uint32_t eflags, tb_char_t h1, tb_
     // ok?
     return ok;
 }
-static vm86_instruction_ref_t vm86_instruction_done_jxx_r0(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_jxx_r0(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the hint
     tb_char_t h1 = tb_tolower(instruction->hint[1]);
     tb_char_t h2 = tb_tolower(instruction->hint[2]);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // ok?
@@ -585,17 +607,17 @@ static vm86_instruction_ref_t vm86_instruction_done_jxx_r0(vm86_instruction_ref_
     // goto it
     return (vm86_instruction_ref_t)r0;
 }
-static vm86_instruction_ref_t vm86_instruction_done_jxx_v0(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_jxx_v0(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the hint
     tb_char_t h1 = tb_tolower(instruction->hint[1]);
     tb_char_t h2 = tb_tolower(instruction->hint[2]);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get v0
@@ -611,17 +633,17 @@ static vm86_instruction_ref_t vm86_instruction_done_jxx_v0(vm86_instruction_ref_
     // goto the next instruction
     return ok? (vm86_instruction_ref_t)v0 : instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_jxx_v0$r0_mul_v1$(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_jxx_v0$r0_mul_v1$(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the hint
     tb_char_t h1 = tb_tolower(instruction->hint[1]);
     tb_char_t h2 = tb_tolower(instruction->hint[2]);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get v0
@@ -666,13 +688,13 @@ static tb_uint32_t vm86_instruction_done_cmp(tb_uint32_t v0, tb_uint32_t v1)
     // ok?
     return eflags;
 }
-static vm86_instruction_ref_t vm86_instruction_done_cmp_r0_r1(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_cmp_r0_r1(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -690,13 +712,13 @@ static vm86_instruction_ref_t vm86_instruction_done_cmp_r0_r1(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_cmp_r0_v0(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_cmp_r0_v0(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -714,13 +736,13 @@ static vm86_instruction_ref_t vm86_instruction_done_cmp_r0_v0(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_cmp_r0_$r1_add_v0$(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_cmp_r0_$r1_add_v0$(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -741,13 +763,13 @@ static vm86_instruction_ref_t vm86_instruction_done_cmp_r0_$r1_add_v0$(vm86_inst
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_cmp_$r0_add_v0$_r1(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_cmp_$r0_add_v0$_r1(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -768,13 +790,13 @@ static vm86_instruction_ref_t vm86_instruction_done_cmp_$r0_add_v0$_r1(vm86_inst
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_cmp_$r0_add_v0$_v1(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_cmp_$r0_add_v0$_v1(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -795,13 +817,13 @@ static vm86_instruction_ref_t vm86_instruction_done_cmp_$r0_add_v0$_v1(vm86_inst
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_shrd_r0_r1_r2(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_shrd_r0_r1_r2(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r1
@@ -819,13 +841,13 @@ static vm86_instruction_ref_t vm86_instruction_done_shrd_r0_r1_r2(vm86_instructi
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_shr_r0_r1(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_shr_r0_r1(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -843,13 +865,13 @@ static vm86_instruction_ref_t vm86_instruction_done_shr_r0_r1(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_shr_r0_v0(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_shr_r0_v0(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -867,13 +889,13 @@ static vm86_instruction_ref_t vm86_instruction_done_shr_r0_v0(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_shl_r0_r1(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_shl_r0_r1(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -891,13 +913,13 @@ static vm86_instruction_ref_t vm86_instruction_done_shl_r0_r1(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_shl_r0_v0(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_shl_r0_v0(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -915,13 +937,13 @@ static vm86_instruction_ref_t vm86_instruction_done_shl_r0_v0(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_sar_r0_r1(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_sar_r0_r1(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -939,13 +961,13 @@ static vm86_instruction_ref_t vm86_instruction_done_sar_r0_r1(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_sar_r0_v0(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_sar_r0_v0(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -963,13 +985,13 @@ static vm86_instruction_ref_t vm86_instruction_done_sar_r0_v0(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_and_r0_r1(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_and_r0_r1(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -987,13 +1009,13 @@ static vm86_instruction_ref_t vm86_instruction_done_and_r0_r1(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_and_r0_v0(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_and_r0_v0(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -1011,13 +1033,13 @@ static vm86_instruction_ref_t vm86_instruction_done_and_r0_v0(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_and_r0_$r1_add_v0$(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_and_r0_$r1_add_v0$(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -1038,13 +1060,13 @@ static vm86_instruction_ref_t vm86_instruction_done_and_r0_$r1_add_v0$(vm86_inst
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_xor_r0_r1(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_xor_r0_r1(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -1062,13 +1084,13 @@ static vm86_instruction_ref_t vm86_instruction_done_xor_r0_r1(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_xor_r0_v0(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_xor_r0_v0(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -1086,13 +1108,13 @@ static vm86_instruction_ref_t vm86_instruction_done_xor_r0_v0(vm86_instruction_r
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_xor_r0_$r1_add_v0$(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_xor_r0_$r1_add_v0$(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -1113,13 +1135,13 @@ static vm86_instruction_ref_t vm86_instruction_done_xor_r0_$r1_add_v0$(vm86_inst
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_or_r0_v0(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_or_r0_v0(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -1137,13 +1159,13 @@ static vm86_instruction_ref_t vm86_instruction_done_or_r0_v0(vm86_instruction_re
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_or_r0_$r1_add_v0$(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_or_r0_$r1_add_v0$(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -1164,13 +1186,13 @@ static vm86_instruction_ref_t vm86_instruction_done_or_r0_$r1_add_v0$(vm86_instr
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_not_r0(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_not_r0(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -1185,13 +1207,13 @@ static vm86_instruction_ref_t vm86_instruction_done_not_r0(vm86_instruction_ref_
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_mul_$r0_add_v0$(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_mul_$r0_add_v0$(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -1219,13 +1241,13 @@ static vm86_instruction_ref_t vm86_instruction_done_mul_$r0_add_v0$(vm86_instruc
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_imul_r0_$r1_add_v0$(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_imul_r0_$r1_add_v0$(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -1255,13 +1277,13 @@ static vm86_instruction_ref_t vm86_instruction_done_imul_r0_$r1_add_v0$(vm86_ins
     // ok
     return instruction + 1;
 }
-static vm86_instruction_ref_t vm86_instruction_done_div_$r0_add_v0$(vm86_instruction_ref_t instruction, vm86_ref_t emulator)
+static vm86_instruction_ref_t vm86_instruction_done_div_$r0_add_v0$(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(instruction && emulator);
+    tb_assert(instruction && machine);
 
     // the registers
-    vm86_registers_ref_t registers = vm86_registers(emulator);
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
     tb_assert(registers);
 
     // get r0
@@ -1425,10 +1447,10 @@ static vm86_instruction_entry_t g_xxx_$r0_add_v0$_v1[] =
 /* //////////////////////////////////////////////////////////////////////////////////////
  * implementation
  */
-tb_bool_t vm86_instruction_compile(vm86_instruction_ref_t instruction, tb_char_t const* code, tb_size_t size, vm86_ref_t emulator, tb_hash_map_ref_t proc_labels, tb_hash_map_ref_t proc_locals)
+tb_bool_t vm86_instruction_compile(vm86_instruction_ref_t instruction, tb_char_t const* code, tb_size_t size, vm86_machine_ref_t machine, tb_hash_map_ref_t proc_labels, tb_hash_map_ref_t proc_locals)
 {
     // check
-    tb_assert_and_check_return_val(instruction && code && size && emulator && proc_labels, tb_false);
+    tb_assert_and_check_return_val(instruction && code && size && machine && proc_labels, tb_false);
 
     // done
     tb_bool_t           ok = tb_false;
@@ -1442,7 +1464,7 @@ tb_bool_t vm86_instruction_compile(vm86_instruction_ref_t instruction, tb_char_t
     do
     {
         // the .data
-        vm86_data_ref_t data = vm86_data(emulator);
+        vm86_data_ref_t data = vm86_machine_data(machine);
         tb_assert_and_check_break(data);
 
         // get instruction name

@@ -1,5 +1,27 @@
-#ifndef VM86_REGISTERS_H
-#define VM86_REGISTERS_H
+/*!The x86 Script Instruction Virtual Machine
+ * 
+ * vm86 is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * vm86 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with vm86; 
+ * If not, see <a href="http://www.gnu.org/licenses/"> http://www.gnu.org/licenses/</a>
+ * 
+ * Copyright (C) 2014 - 2016, ruki All rights reserved.
+ *
+ * @author      ruki
+ * @file        register.h
+ *
+ */
+#ifndef VM86_REGISTER_H
+#define VM86_REGISTER_H
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * includes
@@ -15,7 +37,7 @@ __tb_extern_c_enter__
  * types
  */
 
-/// the emulator register type
+/// the machine register type
 typedef union __vm86_register_t
 {
     /// the u8
@@ -29,7 +51,7 @@ typedef union __vm86_register_t
 
 }vm86_register_t;
 
-/// the emulator register enum
+/// the machine register enum
 typedef enum __vm86_register_e
 {
     VM86_REGISTER_EAX        = 0
@@ -72,7 +94,7 @@ typedef enum __vm86_register_e
 
 }vm86_register_e;
 
-/// the emulator register eflag enum
+/// the machine register eflag enum
 typedef enum __vm86_register_eflag_e
 {
     VM86_REGISTER_EFLAG_CF   = 1 << 0
@@ -84,10 +106,10 @@ typedef enum __vm86_register_eflag_e
 
 }vm86_register_eflag_e;
 
-/// the emulator registers type
+/// the machine registers type
 typedef vm86_register_t (vm86_registers_t)[VM86_REGISTER_MAXN];
 
-/// the emulator registers ref type
+/// the machine registers ref type
 typedef vm86_register_t* vm86_registers_ref_t;
 
 /* //////////////////////////////////////////////////////////////////////////////////////

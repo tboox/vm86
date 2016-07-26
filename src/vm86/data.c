@@ -1,13 +1,35 @@
+/*!The x86 Script Instruction Virtual Machine
+ * 
+ * vm86 is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * vm86 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with vm86; 
+ * If not, see <a href="http://www.gnu.org/licenses/"> http://www.gnu.org/licenses/</a>
+ * 
+ * Copyright (C) 2014 - 2016, ruki All rights reserved.
+ *
+ * @author      ruki
+ * @file        data.c
+ *
+ */
 /* //////////////////////////////////////////////////////////////////////////////////////
  * includes
  */
-#include "emulator.h"
+#include "machine.h"
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * types
  */
 
-// the emulator data chunk type
+// the machine data chunk type
 typedef struct __vm86_data_chunk_t
 {
     // the offset
@@ -18,7 +40,7 @@ typedef struct __vm86_data_chunk_t
 
 }vm86_data_chunk_t, *vm86_data_chunk_ref_t;
 
-// the emulator data impl type
+// the machine data impl type
 typedef struct __vm86_data_impl_t
 {
     // the data
@@ -31,7 +53,7 @@ typedef struct __vm86_data_impl_t
     tb_uint32_t                     base;
 
     // the labels
-    tb_hash_map_ref_t                   labels;
+    tb_hash_map_ref_t               labels;
 
 }vm86_data_impl_t;
 
@@ -44,8 +66,8 @@ vm86_data_ref_t vm86_data_init(tb_size_t size)
     tb_assert_and_check_return_val(size, tb_null);
 
     // done
-    tb_bool_t                   ok = tb_false;
-    vm86_data_impl_t*    impl = tb_null;
+    tb_bool_t           ok = tb_false;
+    vm86_data_impl_t*   impl = tb_null;
     do
     {
         // make data

@@ -1,13 +1,35 @@
+/*!The x86 Script Instruction Virtual Machine
+ * 
+ * vm86 is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * vm86 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with vm86; 
+ * If not, see <a href="http://www.gnu.org/licenses/"> http://www.gnu.org/licenses/</a>
+ * 
+ * Copyright (C) 2014 - 2016, ruki All rights reserved.
+ *
+ * @author      ruki
+ * @file        proc.c
+ *
+ */
 /* //////////////////////////////////////////////////////////////////////////////////////
  * trace
  */
-#define TB_TRACE_MODULE_NAME            "emulator_proc"
+#define TB_TRACE_MODULE_NAME            "machine_proc"
 #define TB_TRACE_MODULE_DEBUG           (0)
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * includes
  */
-#include "emulator.h"
+#include "machine.h"
 #include "instruction.h"
 #include "parser.h"
 
@@ -15,29 +37,29 @@
  * types
  */
 
-// the emulator proc impl type
+// the machine proc impl type
 typedef struct __vm86_proc_impl_t
 {
     // the name
-    tb_char_t*                          name;
+    tb_char_t*                  name;
 
     // the labels
-    tb_hash_map_ref_t                       labels;
+    tb_hash_map_ref_t           labels;
 
     // the locals
-    tb_hash_map_ref_t                       locals;
+    tb_hash_map_ref_t           locals;
 
-    // the emulator
-    vm86_ref_t                   emulator;
+    // the machine
+    vm86_machine_ref_t          machine;
 
     // the instructions
-    vm86_instruction_ref_t       instructions;
+    vm86_instruction_ref_t      instructions;
 
     // the instruction count
-    tb_size_t                           instructions_count;
+    tb_size_t                   instructions_count;
 
     // the last data name
-    tb_char_t                           last_data_name[8192];
+    tb_char_t                   last_data_name[8192];
 
 }vm86_proc_impl_t;
 
@@ -256,7 +278,7 @@ static tb_char_t const* vm86_proc_compiler_read_data(vm86_proc_impl_t* impl, tb_
 
                     // get the offset value
                     tb_uint32_t value = 0;
-                    if (!vm86_parser_get_offset_value(&p, e, &value, impl->labels, vm86_data(impl->emulator))) break;
+                    if (!vm86_parser_get_offset_value(&p, e, &value, impl->labels, vm86_machine_data(impl->machine))) break;
 
                     // append data
                     tb_bits_set_u32_ne(qb, value);
@@ -496,10 +518,10 @@ static tb_bool_t vm86_proc_compiler_compile_skip_label(vm86_proc_impl_t* impl, t
 static tb_bool_t vm86_proc_compiler_compile_data(vm86_proc_impl_t* impl, tb_char_t const* p, tb_char_t const* e)
 {
     // check
-    tb_assert_and_check_return_val(impl && impl->emulator, tb_false);
+    tb_assert_and_check_return_val(impl && impl->machine, tb_false);
 
     // the data
-    vm86_data_ref_t data = vm86_data(impl->emulator);
+    vm86_data_ref_t data = vm86_machine_data(impl->machine);
     tb_assert_and_check_return_val(data, tb_false);
 
     // done
@@ -572,7 +594,7 @@ static tb_bool_t vm86_proc_compiler_compile_code(vm86_proc_impl_t* impl, tb_char
     tb_assert_and_check_return_val(impl, tb_false);
 
     // compile this instruction
-    return vm86_instruction_compile(instruction, p, e - p, impl->emulator, impl->labels, impl->locals);
+    return vm86_instruction_compile(instruction, p, e - p, impl->machine, impl->labels, impl->locals);
 }
 static tb_size_t vm86_proc_compiler_compile_done(vm86_proc_impl_t* impl, tb_char_t const* p, tb_char_t const* e)
 {
@@ -608,7 +630,7 @@ static tb_size_t vm86_proc_compiler_compile_done(vm86_proc_impl_t* impl, tb_char
         {
             // dump data
 #ifdef __vm_debug__
-            if (is_data) vm86_data_dump(vm86_data(impl->emulator));
+            if (is_data) vm86_data_dump(vm86_machine_data(impl->machine));
 #endif
 
             // switch to the code segment
@@ -701,10 +723,10 @@ static tb_bool_t vm86_proc_compile(vm86_proc_impl_t* impl, tb_char_t const* code
 /* //////////////////////////////////////////////////////////////////////////////////////
  * implementation
  */
-vm86_proc_ref_t vm86_proc_init(vm86_ref_t emulator, tb_char_t const* code, tb_size_t size)
+vm86_proc_ref_t vm86_proc_init(vm86_machine_ref_t machine, tb_char_t const* code, tb_size_t size)
 {
     // check
-    tb_assert_and_check_return_val(emulator && code && size, tb_null);
+    tb_assert_and_check_return_val(machine && code && size, tb_null);
 
     // done
     tb_bool_t                   ok = tb_false;
@@ -715,8 +737,8 @@ vm86_proc_ref_t vm86_proc_init(vm86_ref_t emulator, tb_char_t const* code, tb_si
         impl = tb_malloc0_type(vm86_proc_impl_t);
         tb_assert_and_check_break(impl);
 
-        // save emulator
-        impl->emulator = emulator;
+        // save machine
+        impl->machine = machine;
 
         // init labels
         impl->labels = tb_hash_map_init(8, tb_element_str(tb_true), tb_element_uint32());
@@ -807,12 +829,12 @@ tb_void_t vm86_proc_done(vm86_proc_ref_t proc)
     tb_trace_d("=====================================================================");
     tb_trace_d("done: %s", impl->name);
 
-    // the emulator
-    vm86_ref_t emulator = impl->emulator;
-    tb_assert_and_check_return(emulator);
+    // the machine
+    vm86_machine_ref_t machine = impl->machine;
+    tb_assert_and_check_return(machine);
 
     // the stack
-    vm86_stack_ref_t stack = vm86_stack(emulator);
+    vm86_stack_ref_t stack = vm86_machine_stack(machine);
     tb_assert_and_check_return(stack);
 
     // push the stub return address
@@ -827,6 +849,6 @@ tb_void_t vm86_proc_done(vm86_proc_ref_t proc)
         tb_assert(p->done);
 
         // execute it
-        p = p->done(p, emulator);
+        p = p->done(p, machine);
     }
 }

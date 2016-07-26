@@ -17,23 +17,16 @@
  * Copyright (C) 2014 - 2016, ruki All rights reserved.
  *
  * @author      ruki
- * @file        prefix.h
+ * @file        vm86.h
  *
  */
-#ifndef VM86_PREFIX_H
-#define VM86_PREFIX_H
+#ifndef VM86_H
+#define VM86_H
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * includes
  */
-#include "prefix/prefix.h"
-
-/* //////////////////////////////////////////////////////////////////////////////////////
- * types
- */
-
-/// the machine ref type
-typedef struct{}*           vm86_machine_ref_t;
+#include "machine.h"
 
 #endif
 

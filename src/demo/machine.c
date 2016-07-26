@@ -1,18 +1,18 @@
 /* //////////////////////////////////////////////////////////////////////////////////////
  * includes
  */ 
-#include "vm86/emulator.h"
+#include "vm86/vm86.h"
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * test
  */
-static tb_void_t vm86_demo_proc_func_printf(vm86_ref_t emulator)
+static tb_void_t vm86_demo_proc_func_printf(vm86_machine_ref_t machine)
 {
     // check
-    tb_assert(emulator);
+    tb_assert(machine);
 
     // the stack
-    vm86_stack_ref_t stack = vm86_stack(emulator);
+    vm86_stack_ref_t stack = vm86_machine_stack(machine);
     tb_assert(stack);
 
     // get the format
@@ -76,25 +76,25 @@ sub_hello    endp \n\
     "
     };
 
-    // the emulator
-    vm86_ref_t emulator = vm86();
-    if (emulator)
+    // the machine
+    vm86_machine_ref_t machine = vm86_machine();
+    if (machine)
     {
         // the lock
-        tb_spinlock_ref_t lock = vm86_lock(emulator);
+        tb_spinlock_ref_t lock = vm86_machine_lock(machine);
 
         // enter
         tb_spinlock_enter(lock);
 
         // the stack
-        vm86_stack_ref_t stack = vm86_stack(emulator);
+        vm86_stack_ref_t stack = vm86_machine_stack(machine);
 
         // compile proc
-        vm86_proc_ref_t proc = vm86_text_compile(vm86_text(emulator), s_code_sub_hello, sizeof(s_code_sub_hello));
+        vm86_proc_ref_t proc = vm86_text_compile(vm86_machine_text(machine), s_code_sub_hello, sizeof(s_code_sub_hello));
         if (proc)
         {
             // add function
-            vm86_function_set(emulator, "printf", vm86_demo_proc_func_printf);
+            vm86_machine_function_set(machine, "printf", vm86_demo_proc_func_printf);
 
             // init arguments
             vm86_stack_push(stack, value);
@@ -147,21 +147,21 @@ static tb_void_t vm86_demo_proc_done_sub_6B2B40(tb_uint64_t a1, tb_uint8_t a2)
     "
     };
 
-    // the emulator
-    vm86_ref_t emulator = vm86();
-    if (emulator)
+    // the machine
+    vm86_machine_ref_t machine = vm86_machine();
+    if (machine)
     {
         // the lock
-        tb_spinlock_ref_t lock = vm86_lock(emulator);
+        tb_spinlock_ref_t lock = vm86_machine_lock(machine);
 
         // enter
         tb_spinlock_enter(lock);
 
         // the registers
-        vm86_registers_ref_t registers = vm86_registers(emulator);
+        vm86_registers_ref_t registers = vm86_machine_registers(machine);
 
         // compile proc
-        vm86_proc_ref_t proc = vm86_text_compile(vm86_text(emulator), s_code_sub_6B2B40, sizeof(s_code_sub_6B2B40));
+        vm86_proc_ref_t proc = vm86_text_compile(vm86_machine_text(machine), s_code_sub_6B2B40, sizeof(s_code_sub_6B2B40));
         if (proc)
         {
             // init arguments
