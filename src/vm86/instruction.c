@@ -41,10 +41,10 @@
 typedef struct __vm86_instruction_entry_t
 {
     // the instruction name
-    tb_char_t const*                        name;
+    tb_char_t const*                name;
 
     // done it
-    vm86_instruction_done_ref_t      done;
+    vm86_instruction_done_ref_t     done;
 
 }vm86_instruction_entry_t, *vm86_instruction_entry_ref_t;
 
