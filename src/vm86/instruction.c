@@ -78,6 +78,29 @@ static vm86_instruction_done_ref_t vm86_instruction_find(tb_char_t const* name, 
     // ok?
     return entry->done;
 }
+static vm86_instruction_ref_t vm86_instruction_done_leave(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
+{
+    // check
+    tb_assert(instruction && machine);
+
+    // the stack
+    vm86_stack_ref_t stack = vm86_machine_stack(machine);
+    tb_assert(stack);
+
+    // the registers
+    vm86_registers_ref_t registers = vm86_machine_registers(machine);
+    tb_assert(registers);
+
+    // mov esp, ebp
+    vm86_registers_value_set(registers, VM86_REGISTER_ESP, vm86_registers_value(registers, VM86_REGISTER_EBP));
+
+    // pop ebp 
+    tb_uint32_t ebp = 0;
+    vm86_stack_pop(stack, &ebp);
+
+    // end
+    return tb_null;
+}
 static vm86_instruction_ref_t vm86_instruction_done_retn(vm86_instruction_ref_t instruction, vm86_machine_ref_t machine)
 {
     // check
@@ -1324,7 +1347,8 @@ static vm86_instruction_ref_t vm86_instruction_done_div_$r0_add_v0$(vm86_instruc
 // the xxx entries
 static vm86_instruction_entry_t g_xxx[] =
 {
-    { "retn",     vm86_instruction_done_retn         }
+    { "leave",    vm86_instruction_done_leave        }
+,   { "retn",     vm86_instruction_done_retn         }
 };
 
 // the xxx func entries
@@ -1494,15 +1518,19 @@ tb_bool_t vm86_instruction_compile(vm86_instruction_ref_t instruction, tb_char_t
             p++;
             if (!vm86_parser_get_register(&p, e, &r0)) break;
 
-            // skip op
-            tb_assert(*p == '+');
-            p++;
+            // [r0 +- v0]?
+            if (*p != ']')
+            {
+                // skip op
+                tb_assert(*p == '+');
+                p++;
 
-            // skip space
-            while (p < e && tb_isspace(*p)) p++;
- 
-            // get v0
-            if (!vm86_parser_get_value(&p, e, &v0, proc_locals, proc_labels, data)) break;
+                // skip space
+                while (p < e && tb_isspace(*p)) p++;
+     
+                // get v0
+                if (!vm86_parser_get_value(&p, e, &v0, proc_locals, proc_labels, data)) break;
+            }
 
             // skip "], "
             while (p < e && (tb_isspace(*p) || *p == ',' || *p == ']')) p++;
