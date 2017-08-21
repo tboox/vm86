@@ -8,8 +8,7 @@ target("vm86")
     add_defines("__tb_prefix__=\"vm86\"")
 
     -- set the auto-generated config.h
-    set_config_h("$(buildir)/vm86/vm86.config.h")
-    set_config_h_prefix("VM86_CONFIG")
+    set_config_header("$(buildir)/vm86/vm86.config.h", {prefix = "VM86_CONFIG"})
 
     -- set the object files directory
     set_objectdir("$(buildir)/.objs")

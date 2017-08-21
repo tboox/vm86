@@ -3,6 +3,7 @@ set_project("vm86")
 
 -- version
 set_version("1.0.0")
+set_xmakever("2.1.6")
 
 -- set warning all as error
 set_warnings("all", "error")
@@ -11,8 +12,7 @@ set_warnings("all", "error")
 set_languages("c99", "cxx11")
 
 -- disable some compiler errors
-add_cxflags("-Wno-error=deprecated-declarations")
-add_mxflags("-Wno-error=deprecated-declarations")
+add_cxflags("-Wno-error=deprecated-declarations", "-fno-strict-aliasing", "-Wno-error=nullability-completeness")
 
 -- the debug mode
 if is_mode("debug") then

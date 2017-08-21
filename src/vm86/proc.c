@@ -363,7 +363,7 @@ static tb_bool_t vm86_proc_compiler_prepare_locals(vm86_proc_t* proc, tb_char_t 
 
         // init type
         tb_char_t type[8192] = {0};
-        for (b = p; p < e && !tb_isspace(*p); p++);
+        for (b = p; p < e && !tb_isspace(*p); p++) {}
         tb_check_break(p < e && p - b < sizeof(type));
         tb_memcpy(type, b, p - b);
 
