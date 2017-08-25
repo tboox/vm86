@@ -44,6 +44,9 @@
 #define VM86_VERSION_ALTER            VM86_CONFIG_VERSION_ALTER
 
 /// the build version
+#ifndef VM86_CONFIG_VERSION_BUILD
+#   define VM86_CONFIG_VERSION_BUILD    0
+#endif
 #define VM86_VERSION_BUILD            VM86_CONFIG_VERSION_BUILD
 
 /// the build version string
