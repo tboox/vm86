@@ -1,6 +1,32 @@
-# The x86 Script Instruction Virtual Machine
+<p>
+<div align="center">
+  <h1>vm86</h1>
 
-[![Join the chat at https://gitter.im/waruqi/tboox](https://badges.gitter.im/waruqi/tboox.svg)](https://gitter.im/waruqi/tboox?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![donate](http://tboox.org/static/img/donate.svg)](http://tboox.org/donation/)
+  <div>
+    <a href="https://github.com/tboox/vm86/blob/master/LICENSE.md">
+      <img src="https://img.shields.io/github/license/tboox/vm86.svg?colorB=f48041&style=flat-square" alt="license" />
+    </a>
+    <a href="https://gitter.im/tboox/tboox?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge">
+      <img src="https://img.shields.io/gitter/room/tboox/tboox.svg?style=flat-square&colorB=96c312" alt="Gitter" />
+    </a>
+    <a href="https://t.me/joinchat/F2dIAw5iTkDUMwCQ_8CStw">
+      <img src="https://img.shields.io/badge/chat-on%20telegram-blue.svg?style=flat-square" alt="Telegram" />
+    </a>
+    <a href="https://tboox.bearychat.com/signup/98bf6970b9f889d6ae3fbc3d50ee8a36">
+      <img src="https://img.shields.io/badge/chat-on%20bearychat-brightgreen.svg?style=flat-square" alt="Bearychat" />
+    </a>
+    <a href="https://jq.qq.com/?_wv=1027&k=5hpwWFv">
+      <img src="https://img.shields.io/badge/chat-on%20QQ-ff69b4.svg?style=flat-square" alt="QQ" />
+    </a>
+    <a href="http://tboox.org/donation/">
+      <img src="https://img.shields.io/badge/donate-us-orange.svg?style=flat-square" alt="Donate" />
+    </a>
+  </div>
+
+  <p>The x86 Script Instruction Virtual Machine</p>
+</div>
+</p>
+
 
 ## Introduction
 
