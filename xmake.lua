@@ -3,7 +3,7 @@ set_project("vm86")
 
 -- version
 set_version("1.0.0")
-set_xmakever("2.1.6")
+set_xmakever("2.2.2")
 
 -- set warning all as error
 set_warnings("all", "error")
@@ -13,6 +13,15 @@ set_languages("c99", "cxx11")
 
 -- disable some compiler errors
 add_cxflags("-Wno-error=deprecated-declarations", "-fno-strict-aliasing", "-Wno-error=nullability-completeness")
+
+-- set the default architecture, only support 32bits now
+if is_host("windows") then
+    set_config("arch", "x86")
+elseif is_plat("iphoneos") then
+    set_config("arch", "armv7")
+else
+    set_config("arch", "i386")
+end
 
 -- the debug mode
 if is_mode("debug") then
@@ -59,7 +68,7 @@ if is_mode("release", "profile") then
     end
 
     -- smallest?
-    if is_option("smallest") then
+    if has_config("smallest") then
  
         -- enable smallest optimization
         set_optimize("smallest")
@@ -67,13 +76,10 @@ if is_mode("release", "profile") then
         -- enable fastest optimization
         set_optimize("fastest")
     end
-
-    -- attempt to add vector extensions 
-    add_vectorexts("sse2", "sse3", "ssse3", "mmx")
 end
 
 -- smallest?
-if is_option("smallest") then
+if has_config("smallest") then
 
     -- add defines for small
     add_defines("__tb_small__")
@@ -102,7 +108,7 @@ if is_plat("windows") then
     end
 
     -- no msvcrt.lib
-    add_ldflags("-nodefaultlib:\"msvcrt.lib\"")
+    add_ldflags("-nodefaultlib:msvcrt.lib")
 end
 
 -- add option: demo
@@ -112,9 +118,16 @@ option("demo")
     set_category("option")
     set_description("Enable or disable the demo module")
 
--- add packages
-add_packagedirs("pkg") 
+-- the base package
+option("base")
+    set_default(true)
+    if is_os("windows") then add_links("ws2_32") 
+    elseif is_os("android") then add_links("m", "c") 
+    else add_links("pthread", "dl", "m", "c") end
+
+-- add requires
+add_requires("tbox 1.6.3")
 
 -- add projects
 add_subdirs("src/vm86") 
-if is_option("demo") then add_subdirs("src/demo") end
+if has_config("demo") then add_subdirs("src/demo") end
