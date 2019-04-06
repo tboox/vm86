@@ -129,5 +129,5 @@ option("base")
 add_requires("tbox 1.6.3")
 
 -- add projects
-add_subdirs("src/vm86") 
-if has_config("demo") then add_subdirs("src/demo") end
+includes("src/vm86") 
+if has_config("demo") then includes("src/demo") end
