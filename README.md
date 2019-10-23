@@ -487,12 +487,13 @@ hello: 31415926
 
 ## 编译
 
-需要先安装[xmake](http://www.xmake.io/cn)
+需要先安装[xmake](https://xmake.io)，请到xmake官方文档库查看各个平台的安装流程。
 
 ### 在 macosx 上编译
 
+注：新系统已经默认不支持i386编译，缺少相关系统库
+
 ```bash
-$ sudo brew install xmake
 $ xmake f -a i386
 $ xmake
 ```
@@ -500,21 +501,11 @@ $ xmake
 ### 在 linux 上编译
 
 ```bash
-$ git clone https://github.com/waruqi/xmake.git
-$ cd xmake
-$ sudo ./install
-$
-$ cd vm86
 $ xmake f -a i386
 $ xmake
 ```
 
 ### 在 windows 上编译
-
-下载 https://github.com/waruqi/xmake/archive/master.zip
-
-解压运行里面的 install.bat 安装xmake后进行编译：
-
 
 ```bash
 $ xmake
@@ -523,7 +514,6 @@ $ xmake
 ### 编译android版本
 
 ```bash
-$ cd vm86
 $ xmake f -p android --ndk=/xxx/ndk
 $ xmake
 ```
@@ -544,9 +534,9 @@ $ xmake r demo
 
 - Email:        
     - waruqi@gmail.com
-    - waruqi@126.com
 - Website: 	    
-	- [tboox.org](http://www.tboox.org/cn)
-	- [tboox.net](http://www.tboox.net/cn)
+	- [tboox.org](https://tboox.org)
 - QQ(group):    
-    - 343118190
+    - 343118190(full), 662147501
+- Telegram(group):
+    - https://t.me/tbooxorg

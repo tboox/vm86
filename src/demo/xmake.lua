@@ -11,7 +11,7 @@ target("demo")
     add_defines("__tb_prefix__=\"vm86\"")
 
     -- add packages
-    add_packages("tbox", "base")
+    add_packages("tbox")
 
     -- add the source files
     add_files("*.c") 
