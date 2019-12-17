@@ -49,6 +49,7 @@ option("demo")
     set_showmenu(true)
     set_category("option")
     set_description("Enable or disable the demo module")
+option_end()
 
 -- add requires
 add_requires("tbox 1.6.3")
