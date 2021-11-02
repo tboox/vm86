@@ -52,7 +52,7 @@ option("demo")
 option_end()
 
 -- add requires
-add_requires("tbox 1.6.3")
+add_requires("tbox 1.6.6")
 
 -- add projects
 includes("src/vm86") 
